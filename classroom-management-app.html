@@ -1,0 +1,1761 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Locked In Challenge</title>
+  <style>
+    :root {
+      --bg-1: #050816;
+      --bg-2: #11082b;
+      --cyan: #2ff3ff;
+      --pink: #ff2bbf;
+      --lime: #9bff2f;
+      --orange: #ff9a2f;
+      --yellow: #ffd43b;
+      --panel: rgba(8, 12, 30, 0.82);
+      --text: #e9f8ff;
+      --muted: #9cc5d1;
+      --danger: #ff556f;
+      --success: #2cff87;
+      --z-lock: 20000;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 20%, #1d2e65, transparent 35%),
+        radial-gradient(circle at 80% 10%, #5b115f, transparent 40%),
+        linear-gradient(145deg, var(--bg-1), var(--bg-2));
+      overflow-x: hidden;
+      font-size: var(--ui-font-size, 16px);
+    }
+
+    body.locked {
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(47, 243, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(47, 243, 255, 0.08) 1px, transparent 1px);
+      background-size: 38px 38px;
+      animation: drift 15s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(8px);
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
+      animation: float 9s ease-in-out infinite;
+    }
+
+    .orb.o1 {
+      width: 160px;
+      height: 160px;
+      background: var(--pink);
+      top: 8%;
+      left: 12%;
+      animation-delay: 0s;
+    }
+
+    .orb.o2 {
+      width: 220px;
+      height: 220px;
+      background: var(--cyan);
+      bottom: 14%;
+      right: 10%;
+      animation-delay: 1.7s;
+    }
+
+    .orb.o3 {
+      width: 140px;
+      height: 140px;
+      background: var(--lime);
+      top: 52%;
+      left: 50%;
+      animation-delay: 3.2s;
+    }
+
+    @keyframes drift {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(38px);
+      }
+    }
+
+    @keyframes float {
+      0%,
+      100% {
+        transform: translateY(0) translateX(0) scale(1);
+      }
+      50% {
+        transform: translateY(-14px) translateX(10px) scale(1.03);
+      }
+    }
+
+    .lock-screen {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-lock);
+      background: rgba(2, 3, 11, 0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lock-box {
+      width: min(420px, 95vw);
+      padding: 24px;
+      border: 2px solid var(--cyan);
+      border-radius: 14px;
+      background: rgba(12, 20, 45, 0.9);
+      box-shadow: 0 0 25px rgba(47, 243, 255, 0.35);
+    }
+
+    .lock-box h1 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+      color: var(--yellow);
+    }
+
+    .lock-box p {
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .lock-box input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--cyan);
+      background: #0f1533;
+      color: var(--text);
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    .lock-box button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(90deg, var(--cyan), var(--pink));
+      color: #05101a;
+      font-weight: 800;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .error {
+      min-height: 20px;
+      color: var(--danger);
+      font-size: 0.92rem;
+    }
+
+    .app {
+      position: relative;
+      z-index: 2;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 18px 16px 115px;
+    }
+
+    header {
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    header h2 {
+      font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+      letter-spacing: 0.06em;
+      color: var(--yellow);
+      text-shadow: 0 0 14px rgba(255, 212, 59, 0.55);
+    }
+
+    .challenge-wrap {
+      position: sticky;
+      top: 8px;
+      z-index: 10;
+      border: 1px solid rgba(47, 243, 255, 0.35);
+      border-radius: 12px;
+      background: var(--panel);
+      backdrop-filter: blur(4px);
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .challenge-title {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .period-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 10px;
+    }
+
+    .race-row {
+      position: relative;
+      margin-top: -12px;
+      background: rgba(13, 21, 46, 0.95);
+      border-radius: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      height: 58px;
+      overflow: hidden;
+      box-shadow: 0 0 18px rgba(47, 243, 255, 0.2);
+    }
+
+    .race-row:first-child {
+      margin-top: 0;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+      color: var(--muted);
+      gap: 6px;
+      padding: 6px 10px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .track {
+      height: 100%;
+      border-radius: 0;
+      background: transparent;
+      overflow: hidden;
+      position: absolute;
+      inset: 0;
+    }
+
+    .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--lime));
+      width: 0;
+      transition: width 0.4s ease;
+      opacity: 0.85;
+    }
+
+    .global-overview {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .team-board {
+      margin-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      padding-top: 10px;
+    }
+
+    .team-board h4 {
+      color: var(--lime);
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .team-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .team-label {
+      min-width: 84px;
+      font-weight: 700;
+      color: var(--yellow);
+    }
+
+    .team-track {
+      flex: 1 1 auto;
+      height: 16px;
+      border-radius: 999px;
+      background: #1a2041;
+      overflow: hidden;
+    }
+
+    .team-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--cyan), var(--lime));
+      transition: width 0.4s ease;
+    }
+
+    .team-score {
+      min-width: 76px;
+      text-align: right;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .period-tab-wrap {
+      margin-bottom: 10px;
+    }
+
+    .tab-btn {
+      border: 1px solid rgba(47, 243, 255, 0.4);
+      background: rgba(7, 16, 41, 0.7);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(90deg, #175f87, #3f2496);
+      border-color: var(--cyan);
+    }
+
+    .periods {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(295px, 1fr));
+      gap: 12px;
+    }
+
+    .period-card {
+      border: 1px solid rgba(47, 243, 255, 0.35);
+      border-radius: 14px;
+      background: var(--panel);
+      padding: 12px;
+    }
+
+    .period-header {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      background: rgba(12, 20, 44, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px;
+      resize: none;
+      overflow: hidden;
+      min-height: 34px;
+      line-height: 1.3;
+    }
+
+    .period-name {
+      font-size: 1.02rem;
+      font-weight: 700;
+    }
+
+    .period-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      color: #081018;
+    }
+
+    .btn-add {
+      background: linear-gradient(90deg, var(--lime), var(--yellow));
+    }
+
+    .btn-del {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .student-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .student {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(9, 15, 36, 0.9);
+      transition: transform 0.2s ease;
+    }
+
+    .student.level-up {
+      animation: pulse 0.35s ease 2;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.03);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .student-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 0;
+    }
+
+    .student-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .student-name-box {
+      flex: 0 1 340px;
+      max-width: 100%;
+    }
+
+    .student-level {
+      min-width: 56px;
+      text-align: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      padding: 4px 6px;
+      font-size: 0.8rem;
+      color: var(--yellow);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .student-points {
+      min-width: 66px;
+      text-align: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 4px 6px;
+      font-size: 0.8rem;
+      color: var(--cyan);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .student-streak {
+      min-width: 76px;
+      text-align: center;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 4px 6px;
+      font-size: 0.8rem;
+      color: #ff9a2f;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .student-meta {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0;
+    }
+
+    .xp-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 0;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .xp-btn {
+      color: #06111d;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 0.82rem;
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .xp-btn.two-line {
+      flex-direction: column;
+      gap: 0;
+      min-width: 84px;
+      line-height: 1.05;
+      padding: 6px 10px;
+      text-align: center;
+    }
+
+    .xp-main {
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    .xp-label {
+      font-size: 0.66rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .locked-in { background: #35f0ff; }
+    .mic-drop { background: #ff79de; }
+    .top-tier { background: #a8ff6f; }
+    .cell-track { background: #ffc66d; }
+    .check-in { background: #7dffdc; }
+
+    .team-select {
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: #162a52;
+      color: var(--text);
+      font-weight: 700;
+      padding: 6px 10px;
+    }
+
+    .medal-board {
+      margin-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .medal-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 6px;
+    }
+
+    .medal {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .medal strong { color: var(--yellow); }
+
+    .phone-indicator {
+      margin-left: 0;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: #1a294f;
+      color: var(--orange);
+      min-width: 54px;
+      border-radius: 999px;
+      padding: 6px 8px;
+      font-weight: 700;
+    }
+
+    .top-display {
+      margin-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      padding-top: 10px;
+    }
+
+    .top-display h4 {
+      color: var(--yellow);
+      margin-bottom: 7px;
+      font-size: 1.3rem;
+      letter-spacing: 0.03em;
+    }
+
+    .top-display-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 8px;
+    }
+
+    .top-period-card {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 8px;
+    }
+
+    .top-period-title {
+      color: var(--lime);
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    .top-display .medal-row {
+      gap: 10px;
+    }
+
+    .top-display .medal {
+      font-size: 1.22rem;
+      line-height: 1.2;
+      padding: 10px 12px;
+      border-radius: 4px;
+      min-width: 180px;
+      min-height: 90px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(145deg, rgba(18, 34, 80, 0.9), rgba(18, 65, 56, 0.8));
+      border: 2px solid rgba(155, 255, 47, 0.55);
+    }
+
+    .top-display .medal strong {
+      font-size: 1.3rem;
+    }
+
+    .period-bottom-actions {
+      margin-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(0, 0, 0, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      width: min(720px, 96vw);
+      max-height: 88vh;
+      overflow: auto;
+      padding: 14px;
+      background: #0c1635;
+      border-radius: 12px;
+      border: 1px solid rgba(47, 243, 255, 0.45);
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .infraction-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .infra-list {
+      display: grid;
+      gap: 7px;
+      margin: 10px 0;
+    }
+
+    .infra-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 6px;
+      align-items: center;
+    }
+
+    .cmd-center {
+      position: static;
+      z-index: 10;
+      width: min(1120px, 100%);
+      margin: 10px auto 0;
+      background: rgba(7, 11, 28, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .cmd-center h3 {
+      font-size: 0.86rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .cmd-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .team-manager {
+      margin-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      padding-top: 10px;
+    }
+
+    .team-manager h4 {
+      color: var(--lime);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    .team-manager-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .team-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #122249;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      padding: 6px 8px;
+    }
+
+    .team-chip input {
+      width: 110px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #0f1a3a;
+      color: var(--text);
+      padding: 5px 8px;
+    }
+
+    .cmd-grid select,
+    .cmd-grid button {
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: #152245;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .projector-toggle {
+      background: linear-gradient(90deg, #ffe46b, #ff9a2f);
+      color: #1c1302;
+    }
+
+    .projector-exit {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 3000;
+      display: none;
+      background: #ffe46b;
+      color: #1f1404;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    body.projector-mode .projector-exit {
+      display: inline-block;
+    }
+
+    body.projector-mode #commandCenter {
+      display: none;
+    }
+
+    body.projector-mode .app {
+      max-width: 1700px;
+      padding-bottom: 20px;
+    }
+
+body.projector-mode .periods .period-actions,
+body.projector-mode .periods .period-bottom-actions,
+body.projector-mode .periods .btn-del {
+      display: none;
+    }
+
+    .cmd-grid button.warn {
+      background: #5e1f2e;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 760px) {
+      .student-head {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .cmd-center {
+        position: static;
+        transform: none;
+        margin: 10px auto 0;
+        width: 100%;
+      }
+
+      .app {
+        padding-bottom: 18px;
+      }
+    }
+  </style>
+</head>
+<body class="locked">
+  <div class="bg-grid"></div>
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+
+  <section id="lockScreen" class="lock-screen" aria-label="Lock screen">
+    <div class="lock-box">
+      <h1>Teacher Access Required</h1>
+      <p>Enter passcode to open the classroom dashboard.</p>
+      <input id="passcodeInput" type="password" placeholder="Passcode" />
+      <button id="unlockBtn" type="button">Unlock</button>
+      <div id="lockError" class="error"></div>
+    </div>
+  </section>
+
+  <main class="app" id="appRoot" aria-live="polite">
+    <header>
+      <h2>Locked In Challenge</h2>
+    </header>
+
+    <section class="challenge-wrap">
+      <div class="challenge-title">Class Challenge</div>
+      <div id="periodBars" class="period-bars"></div>
+      <div id="globalOverview" class="global-overview"></div>
+      <section id="teamBoard" class="team-board"></section>
+    </section>
+
+    <section id="topStudentsBoard" class="top-display"></section>
+
+    <div class="tabs" id="scopeTabs">
+      <button class="tab-btn active" data-tab="daily">Daily</button>
+      <button class="tab-btn" data-tab="weekly">Weekly</button>
+      <button class="tab-btn" data-tab="monthly">Monthly</button>
+    </div>
+
+    <div class="tabs period-tab-wrap" id="periodTabs"></div>
+    <section id="periodsContainer" class="periods"></section>
+  </main>
+
+  <section class="cmd-center" id="commandCenter">
+    <h3>TEACHER COMMAND CENTER</h3>
+    <div class="cmd-grid">
+      <button id="addPeriodBtn" class="btn-add" type="button">+ Add Period</button>
+      <select id="resetScope">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+      <label for="fontSizeRange">Font</label>
+      <input id="fontSizeRange" type="range" min="13" max="30" step="1" value="16" />
+      <span id="fontSizeValue">16px</span>
+      <button id="projectorToggleBtn" class="projector-toggle" type="button">Projector Mode</button>
+      <button id="clearPointsBtn" class="warn" type="button">Delete Points (Scope)</button>
+      <button id="clearInfractionsBtn" class="warn" type="button">Delete Cell Infractions (Scope)</button>
+    </div>
+    <div class="team-manager">
+      <h4>TEAMS</h4>
+      <div id="teamManagerList" class="team-manager-list"></div>
+      <button id="addTeamBtn" class="btn-add" type="button">+ Add Team</button>
+    </div>
+  </section>
+
+  <button id="projectorExitBtn" class="projector-exit" type="button">Exit Projector</button>
+
+  <section id="infractionModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h3 id="infraTitle">Cell Phone Infractions</h3>
+        <button id="closeInfraModal" class="btn-del" type="button">X</button>
+      </div>
+      <div class="infraction-tabs">
+        <button class="tab-btn active" data-infra-tab="daily">Daily</button>
+        <button class="tab-btn" data-infra-tab="weekly">Weekly</button>
+        <button class="tab-btn" data-infra-tab="monthly">Monthly</button>
+      </div>
+      <canvas id="infraGraph" width="640" height="220" aria-label="Infractions graph"></canvas>
+      <div id="infraList" class="infra-list"></div>
+    </div>
+  </section>
+
+  <script>
+    const STORAGE_KEY = "locked_in_challenge_v1";
+    const PASSCODE = "rappahs";
+    const LEVEL_COLORS = ["#35f0ff", "#ff79de", "#a8ff6f", "#ffd43b", "#9b8bff", "#ff8f5a"];
+    const SCOPE_ORDER = ["daily", "weekly", "monthly"];
+    const DEFAULT_TEAMS = ["Alpha", "Beta", "Gamma", "Delta"];
+
+    const defaultState = {
+      unlocked: false,
+      activeTab: "daily",
+      activePeriodId: "",
+      fontSize: 16,
+      projectorMode: false,
+      teams: [...DEFAULT_TEAMS],
+      periods: [
+        { id: uid(), name: "Period 1", students: [starterStudent("Student 1", DEFAULT_TEAMS[0]), starterStudent("Student 2", DEFAULT_TEAMS[1])] },
+        { id: uid(), name: "Period 2", students: [starterStudent("Student 1", DEFAULT_TEAMS[0])] }
+      ]
+    };
+    defaultState.activePeriodId = defaultState.periods[0].id;
+
+    let state = loadState();
+    let currentInfraModal = { periodId: null, studentId: null, tab: "daily" };
+
+    const lockScreen = document.getElementById("lockScreen");
+    const passcodeInput = document.getElementById("passcodeInput");
+    const unlockBtn = document.getElementById("unlockBtn");
+    const lockError = document.getElementById("lockError");
+    const periodsContainer = document.getElementById("periodsContainer");
+    const periodBars = document.getElementById("periodBars");
+    const teamBoard = document.getElementById("teamBoard");
+    const globalOverview = document.getElementById("globalOverview");
+    const scopeTabs = document.getElementById("scopeTabs");
+    const periodTabs = document.getElementById("periodTabs");
+    const topStudentsBoard = document.getElementById("topStudentsBoard");
+    const addPeriodBtn = document.getElementById("addPeriodBtn");
+    const resetScope = document.getElementById("resetScope");
+    const clearPointsBtn = document.getElementById("clearPointsBtn");
+    const clearInfractionsBtn = document.getElementById("clearInfractionsBtn");
+    const fontSizeRange = document.getElementById("fontSizeRange");
+    const fontSizeValue = document.getElementById("fontSizeValue");
+    const teamManagerList = document.getElementById("teamManagerList");
+    const addTeamBtn = document.getElementById("addTeamBtn");
+    const projectorToggleBtn = document.getElementById("projectorToggleBtn");
+    const projectorExitBtn = document.getElementById("projectorExitBtn");
+    const infractionModal = document.getElementById("infractionModal");
+    const closeInfraModal = document.getElementById("closeInfraModal");
+    const infraList = document.getElementById("infraList");
+    const infraTitle = document.getElementById("infraTitle");
+    const infraGraph = document.getElementById("infraGraph");
+
+    bindEvents();
+    renderAll();
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function nowISO() {
+      return new Date().toISOString();
+    }
+
+    function starterStudent(name, team = DEFAULT_TEAMS[0]) {
+      return {
+        id: uid(),
+        name,
+        team,
+        colors: { daily: "", weekly: "", monthly: "" },
+        level: { daily: 1, weekly: 1, monthly: 1 },
+        streak: { daily: 0, weekly: 0, monthly: 0 },
+        multiplierOpen: { daily: false, weekly: false, monthly: false },
+        lastCheckin: { daily: "", weekly: "", monthly: "" },
+        points: { daily: 0, weekly: 0, monthly: 0 },
+        infractions: { daily: [], weekly: [], monthly: [] },
+        levelFlash: false
+      };
+    }
+
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return clone(defaultState);
+        return migrateState(JSON.parse(raw));
+      } catch (e) {
+        return clone(defaultState);
+      }
+    }
+
+    function migrateState(s) {
+      const migrated = clone(defaultState);
+      migrated.unlocked = !!s.unlocked;
+      migrated.activeTab = SCOPE_ORDER.includes(s.activeTab) ? s.activeTab : "daily";
+      migrated.fontSize = Number.isFinite(Number(s.fontSize)) ? Number(s.fontSize) : 16;
+      migrated.projectorMode = !!s.projectorMode;
+      migrated.teams = normalizeTeams(s.teams);
+      if (Array.isArray(s.periods) && s.periods.length) {
+        migrated.periods = s.periods.map((p, pi) => ({
+          id: p.id || uid(),
+          name: p.name || `Period ${pi + 1}`,
+          students: Array.isArray(p.students) ? p.students.map((st, si) => ({
+            id: st.id || uid(),
+            name: st.name || `Student ${si + 1}`,
+            team: migrated.teams.includes(st.team) ? st.team : migrated.teams[si % migrated.teams.length],
+            colors: normScopeObj(st.colors, ""),
+            level: normScopeObj(st.level, 1),
+            streak: normScopeObj(st.streak, 0),
+            multiplierOpen: normScopeObj(st.multiplierOpen, false),
+            lastCheckin: normScopeObj(st.lastCheckin, ""),
+            points: normScopeObj(st.points, 0),
+            infractions: normScopeObj(st.infractions, []),
+            levelFlash: false
+          })) : []
+        }));
+      }
+      const hasActive = migrated.periods.some((p) => p.id === s.activePeriodId);
+      migrated.activePeriodId = hasActive ? s.activePeriodId : (migrated.periods[0] ? migrated.periods[0].id : "");
+      return migrated;
+    }
+
+    function normScopeObj(obj, fallbackVal) {
+      return {
+        daily: obj && obj.daily !== undefined ? obj.daily : clone(fallbackVal),
+        weekly: obj && obj.weekly !== undefined ? obj.weekly : clone(fallbackVal),
+        monthly: obj && obj.monthly !== undefined ? obj.monthly : clone(fallbackVal)
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function normalizeTeams(teams) {
+      const src = Array.isArray(teams) ? teams : DEFAULT_TEAMS;
+      const cleaned = src
+        .map((t) => String(t || "").trim())
+        .filter(Boolean)
+        .slice(0, 12);
+      const unique = [...new Set(cleaned)];
+      return unique.length ? unique : [...DEFAULT_TEAMS];
+    }
+
+    function bindEvents() {
+      unlockBtn.addEventListener("click", tryUnlock);
+      passcodeInput.addEventListener("keydown", (e) => e.key === "Enter" && tryUnlock());
+
+      scopeTabs.addEventListener("click", (e) => {
+        const btn = e.target.closest(".tab-btn");
+        if (!btn) return;
+        state.activeTab = btn.dataset.tab;
+        saveState();
+        renderAll();
+      });
+
+      periodTabs.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-period-tab]");
+        if (!btn) return;
+        state.activePeriodId = btn.dataset.periodTab;
+        saveState();
+        renderAll();
+      });
+
+      addPeriodBtn.addEventListener("click", () => {
+        const period = { id: uid(), name: `Period ${state.periods.length + 1}`, students: [] };
+        state.periods.push(period);
+        state.activePeriodId = period.id;
+        saveState();
+        renderAll();
+      });
+
+      projectorToggleBtn.addEventListener("click", () => {
+        state.projectorMode = !state.projectorMode;
+        saveState();
+        applyProjectorMode();
+      });
+
+      projectorExitBtn.addEventListener("click", () => {
+        state.projectorMode = false;
+        saveState();
+        applyProjectorMode();
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key.toLowerCase() === "p") {
+          state.projectorMode = !state.projectorMode;
+          saveState();
+          applyProjectorMode();
+        }
+      });
+
+      addTeamBtn.addEventListener("click", () => {
+        const nextNum = state.teams.length + 1;
+        state.teams.push(`Team ${nextNum}`);
+        state.teams = normalizeTeams(state.teams);
+        saveState();
+        renderAll();
+      });
+
+      teamManagerList.addEventListener("change", (e) => {
+        const input = e.target.closest("[data-team-index]");
+        if (!input) return;
+        const idx = Number(input.dataset.teamIndex);
+        if (!Number.isInteger(idx) || idx < 0 || idx >= state.teams.length) return;
+        const oldName = state.teams[idx];
+        const newName = input.value.trim();
+        if (!newName || newName === oldName || state.teams.includes(newName)) return;
+        state.teams[idx] = newName;
+        state.periods.forEach((period) => {
+          period.students.forEach((student) => {
+            if (student.team === oldName) student.team = newName;
+          });
+        });
+        state.teams = normalizeTeams(state.teams);
+        saveState();
+        renderAll();
+      });
+
+      teamManagerList.addEventListener("click", (e) => {
+        const del = e.target.closest("[data-del-team-index]");
+        if (!del) return;
+        if (state.teams.length <= 1) return;
+        const idx = Number(del.dataset.delTeamIndex);
+        if (!Number.isInteger(idx) || idx < 0 || idx >= state.teams.length) return;
+        const removed = state.teams[idx];
+        state.teams.splice(idx, 1);
+        state.periods.forEach((period) => {
+          period.students.forEach((student, sidx) => {
+            if (student.team === removed) {
+              student.team = state.teams[sidx % state.teams.length];
+            }
+          });
+        });
+        state.teams = normalizeTeams(state.teams);
+        saveState();
+        renderAll();
+      });
+
+      fontSizeRange.addEventListener("input", () => {
+        state.fontSize = Number(fontSizeRange.value);
+        applyFontSize();
+        saveState();
+      });
+
+      clearPointsBtn.addEventListener("click", () => {
+        const scope = resetScope.value;
+        state.periods.forEach((period) => {
+          period.students.forEach((student) => {
+            student.points[scope] = 0;
+            student.level[scope] = 1;
+            student.colors[scope] = "";
+          });
+        });
+        saveState();
+        renderAll();
+      });
+
+      clearInfractionsBtn.addEventListener("click", () => {
+        const scope = resetScope.value;
+        state.periods.forEach((period) => {
+          period.students.forEach((student) => {
+            student.infractions[scope] = [];
+          });
+        });
+        saveState();
+        renderAll();
+      });
+
+      periodsContainer.addEventListener("click", onPeriodClick);
+      periodsContainer.addEventListener("input", onPeriodInput);
+      periodsContainer.addEventListener("change", onPeriodInput);
+
+      closeInfraModal.addEventListener("click", () => infractionModal.classList.remove("show"));
+      infractionModal.addEventListener("click", (e) => {
+        if (e.target === infractionModal) infractionModal.classList.remove("show");
+      });
+      infractionModal.addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-infra-tab]");
+        if (tab) {
+          currentInfraModal.tab = tab.dataset.infraTab;
+          renderInfractionModal();
+        }
+        const del = e.target.closest("[data-del-infraction-id]");
+        if (del) deleteInfraction(del.dataset.delInfractionId);
+      });
+    }
+
+    function tryUnlock() {
+      if ((passcodeInput.value || "").toLowerCase() === PASSCODE) {
+        state.unlocked = true;
+        saveState();
+        renderLock();
+      } else {
+        lockError.textContent = "Incorrect passcode.";
+      }
+    }
+
+    function renderLock() {
+      if (state.unlocked) {
+        lockScreen.classList.add("hidden");
+        document.body.classList.remove("locked");
+      } else {
+        lockScreen.classList.remove("hidden");
+        document.body.classList.add("locked");
+      }
+    }
+
+    function applyFontSize() {
+      const size = Math.max(13, Math.min(30, Number(state.fontSize || 16)));
+      document.documentElement.style.setProperty("--ui-font-size", `${size}px`);
+      fontSizeRange.value = String(size);
+      fontSizeValue.textContent = `${size}px`;
+    }
+
+    function applyProjectorMode() {
+      document.body.classList.toggle("projector-mode", !!state.projectorMode);
+      projectorToggleBtn.textContent = state.projectorMode ? "Projector On" : "Projector Mode";
+    }
+
+    function renderAll() {
+      renderLock();
+      applyFontSize();
+      applyProjectorMode();
+      renderScopeTabs();
+      renderPeriodTabs();
+      renderChallengeBars();
+      renderTeamBoard();
+      renderTopStudentsBoard();
+      renderPeriods();
+      renderTeamManager();
+    }
+
+    function renderTeamManager() {
+      teamManagerList.innerHTML = state.teams.map((team, idx) => `
+        <div class="team-chip">
+          <input type="text" value="${escapeHtml(team)}" data-team-index="${idx}" />
+          <button type="button" class="btn-del" data-del-team-index="${idx}">X</button>
+        </div>
+      `).join("");
+    }
+
+    function renderScopeTabs() {
+      scopeTabs.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tab === state.activeTab);
+      });
+    }
+
+    function renderPeriodTabs() {
+      periodTabs.innerHTML = "";
+      state.periods.forEach((period, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "tab-btn" + (period.id === state.activePeriodId ? " active" : "");
+        btn.dataset.periodTab = period.id;
+        btn.textContent = period.name || `Period ${idx + 1}`;
+        periodTabs.appendChild(btn);
+      });
+    }
+
+    function renderPeriods() {
+      periodsContainer.innerHTML = "";
+      const period = state.periods.find((p) => p.id === state.activePeriodId);
+      if (!period) {
+        periodsContainer.innerHTML = "<article class='period-card'>Add a period to begin.</article>";
+        return;
+      }
+
+      const card = document.createElement("article");
+      card.className = "period-card";
+      card.dataset.periodId = period.id;
+
+      const header = document.createElement("div");
+      header.className = "period-header";
+      header.innerHTML = `
+        <textarea rows="1" class="period-name auto-grow" data-role="period-name" data-period-id="${period.id}">${escapeHtml(period.name)}</textarea>
+        <div class="period-actions">
+          <button type="button" class="btn-del" data-del-period="${period.id}">X</button>
+        </div>
+      `;
+      card.appendChild(header);
+
+      const studentList = document.createElement("div");
+      studentList.className = "student-list";
+      period.students.forEach((student) => studentList.appendChild(renderStudent(period, student)));
+      card.appendChild(studentList);
+
+      const bottom = document.createElement("div");
+      bottom.className = "period-bottom-actions";
+      bottom.innerHTML = `<button type="button" class="btn-add" data-add-student="${period.id}">+ Add Student</button>`;
+      card.appendChild(bottom);
+
+      periodsContainer.appendChild(card);
+      autoExpandAll();
+    }
+
+    function renderStudent(period, student) {
+      const active = state.activeTab;
+      const points = student.points[active] || 0;
+      const level = student.level[active] || 1;
+      const multiplier = calcMultiplier(student, active);
+      const multiplierOpen = student.multiplierOpen?.[active] !== false;
+      const color = student.colors[active] || "";
+      const infraCount = (student.infractions[active] || []).length;
+
+      const el = document.createElement("div");
+      el.className = "student" + (student.levelFlash ? " level-up" : "");
+      if (color) el.style.borderColor = color;
+      el.dataset.studentId = student.id;
+
+      el.innerHTML = `
+        <div class="student-head">
+          <div class="student-left">
+            <span class="student-level">Lv ${level}</span>
+            <span class="student-points">${points} XP</span>
+            <span class="student-streak">🔥 x${multiplier.toFixed(1)}</span>
+            <textarea rows="1" class="auto-grow student-name-box" data-role="student-name" data-period-id="${period.id}" data-student-id="${student.id}">${escapeHtml(student.name)}</textarea>
+            ${infraCount > 0 ? `<button type="button" class="phone-indicator" data-open-infra="${period.id}:${student.id}" title="View infractions">📱${infraCount}</button>` : ""}
+          </div>
+          <div class="xp-actions">
+            <select class="team-select" data-role="student-team" data-period-id="${period.id}" data-student-id="${student.id}">
+              ${state.teams.map((team) => `<option value="${escapeHtml(team)}" ${student.team === team ? "selected" : ""}>${escapeHtml(team)}</option>`).join("")}
+            </select>
+            <button type="button" class="xp-btn check-in" data-checkin="${period.id}:${student.id}">${multiplierOpen ? "✅ Multiplier" : "🟥 Multiplier"}</button>
+            <button type="button" class="xp-btn two-line locked-in" data-award="${period.id}:${student.id}:10"><span class="xp-main">🎯 +10</span><span class="xp-label">Locked In</span></button>
+            <button type="button" class="xp-btn two-line mic-drop" data-award="${period.id}:${student.id}:10"><span class="xp-main">🎤 +10</span><span class="xp-label">Mic Drop</span></button>
+            <button type="button" class="xp-btn two-line top-tier" data-award="${period.id}:${student.id}:15"><span class="xp-main">🏆 +15</span><span class="xp-label">Top Tier</span></button>
+            <button type="button" class="xp-btn cell-track" data-cell="${period.id}:${student.id}">📱</button>
+            <button type="button" class="btn-del" data-del-student="${period.id}:${student.id}">X</button>
+          </div>
+        </div>
+      `;
+      return el;
+    }
+
+    function buildTopFive(period) {
+      const ranked = [...period.students]
+        .sort((a, b) => (b.points[state.activeTab] || 0) - (a.points[state.activeTab] || 0))
+        .slice(0, 5);
+      if (!ranked.length) return "<span class='medal'>No students yet</span>";
+      return ranked.map((student, idx) => {
+        const place = idx + 1;
+        const placeText = place <= 3 ? `${place}` : "";
+        const medal = place === 1 ? "🥇" : place === 2 ? "🥈" : place === 3 ? "🥉" : "🏅";
+        return `<span class="medal"><strong>${placeText} ${medal}</strong> 💰 ${escapeHtml(student.name)} (${student.points[state.activeTab] || 0}) 💰</span>`;
+      }).join("");
+    }
+
+    function renderTopStudentsBoard() {
+      const activePeriod = state.periods.find((p) => p.id === state.activePeriodId);
+      topStudentsBoard.innerHTML = `
+        <h4>Top Students Leaderboard (${capitalize(state.activeTab)})</h4>
+        <div class="top-display-grid">
+          ${activePeriod ? `
+            <div class="top-period-card">
+              <div class="top-period-title">${escapeHtml(activePeriod.name)}</div>
+              <div class="medal-row">${buildTopFive(activePeriod)}</div>
+            </div>` : "<div class='top-period-card'>No active period selected.</div>"}
+        </div>
+      `;
+    }
+
+    function renderChallengeBars() {
+      periodBars.innerHTML = "";
+      const records = state.periods.map((period) => {
+        const sum = period.students.reduce((acc, s) => acc + (s.points[state.activeTab] || 0), 0);
+        const avg = period.students.length ? sum / period.students.length : 0;
+        return { period, avg };
+      }).sort((a, b) => b.avg - a.avg);
+
+      const topAvg = Math.max(1, ...records.map((r) => r.avg));
+      let totalAverage = 0;
+
+      records.forEach((record) => {
+        totalAverage += record.avg;
+        const pct = Math.max(3, Math.min(100, (record.avg / topAvg) * 100));
+        const row = document.createElement("div");
+        row.className = "race-row";
+        row.innerHTML = `
+          <div class="bar-label"><span>${escapeHtml(record.period.name)}</span><span>${record.avg.toFixed(1)} XP</span></div>
+          <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+        `;
+        periodBars.appendChild(row);
+      });
+
+      const classAverage = records.length ? totalAverage / records.length : 0;
+      globalOverview.textContent = `${capitalize(state.activeTab)} Class Challenge Average: ${classAverage.toFixed(1)} XP`;
+    }
+
+    function renderTeamBoard() {
+      const period = state.periods.find((p) => p.id === state.activePeriodId);
+      if (!period) {
+        teamBoard.innerHTML = "<h4>Team Race</h4><div class='global-overview'>Select a period to view teams.</div>";
+        return;
+      }
+
+      const totals = state.teams.map((team) => ({
+        team,
+        score: period.students.filter((s) => s.team === team).reduce((acc, s) => acc + (s.points[state.activeTab] || 0), 0)
+      })).sort((a, b) => b.score - a.score);
+
+      const max = Math.max(1, ...totals.map((t) => t.score));
+      teamBoard.innerHTML = `
+        <h4>Team Mode (${escapeHtml(period.name)})</h4>
+        ${totals.map((item) => `
+          <div class="team-row">
+            <div class="team-label">${item.team}</div>
+            <div class="team-track"><div class="team-fill" style="width:${Math.max(4, (item.score / max) * 100)}%"></div></div>
+            <div class="team-score">${item.score} XP</div>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function onPeriodClick(e) {
+      const delPeriod = e.target.closest("[data-del-period]");
+      if (delPeriod) {
+        const id = delPeriod.dataset.delPeriod;
+        state.periods = state.periods.filter((p) => p.id !== id);
+        if (!state.periods.some((p) => p.id === state.activePeriodId)) {
+          state.activePeriodId = state.periods[0] ? state.periods[0].id : "";
+        }
+        saveState();
+        renderAll();
+        return;
+      }
+
+      const addStudent = e.target.closest("[data-add-student]");
+      if (addStudent) {
+        const period = state.periods.find((p) => p.id === addStudent.dataset.addStudent);
+        if (!period) return;
+        period.students.push(starterStudent(`Student ${period.students.length + 1}`, getSuggestedTeam(period)));
+        saveState();
+        renderAll();
+        return;
+      }
+
+      const delStudent = e.target.closest("[data-del-student]");
+      if (delStudent) {
+        const [pid, sid] = delStudent.dataset.delStudent.split(":");
+        const period = state.periods.find((p) => p.id === pid);
+        if (!period) return;
+        period.students = period.students.filter((s) => s.id !== sid);
+        saveState();
+        renderAll();
+        return;
+      }
+
+      const award = e.target.closest("[data-award]");
+      if (award) {
+        const [pid, sid, ptsRaw] = award.dataset.award.split(":");
+        addPoints(pid, sid, Number(ptsRaw));
+        return;
+      }
+
+      const checkin = e.target.closest("[data-checkin]");
+      if (checkin) {
+        const [pid, sid] = checkin.dataset.checkin.split(":");
+        handleMultiplierButton(pid, sid);
+        return;
+      }
+
+      const cell = e.target.closest("[data-cell]");
+      if (cell) {
+        const [pid, sid] = cell.dataset.cell.split(":");
+        addInfraction(pid, sid);
+        return;
+      }
+
+      const openInfra = e.target.closest("[data-open-infra]");
+      if (openInfra) {
+        const [pid, sid] = openInfra.dataset.openInfra.split(":");
+        currentInfraModal = { periodId: pid, studentId: sid, tab: state.activeTab };
+        renderInfractionModal();
+        infractionModal.classList.add("show");
+      }
+    }
+
+    function onPeriodInput(e) {
+      const target = e.target;
+      autoGrow(target);
+      const role = target.dataset.role;
+      if (!role) return;
+
+      if (role === "period-name") {
+        const period = state.periods.find((p) => p.id === target.dataset.periodId);
+        if (!period) return;
+        period.name = target.value.trim() || "Untitled Period";
+        saveState();
+        renderPeriodTabs();
+        renderChallengeBars();
+        renderTopStudentsBoard();
+        return;
+      }
+
+      if (role === "student-name") {
+        const period = state.periods.find((p) => p.id === target.dataset.periodId);
+        if (!period) return;
+        const student = period.students.find((s) => s.id === target.dataset.studentId);
+        if (!student) return;
+        student.name = target.value.trim() || "Unnamed Student";
+        saveState();
+        renderTopStudentsBoard();
+        return;
+      }
+
+      if (role === "student-team") {
+        const period = state.periods.find((p) => p.id === target.dataset.periodId);
+        if (!period) return;
+        const student = period.students.find((s) => s.id === target.dataset.studentId);
+        if (!student) return;
+        student.team = state.teams.includes(target.value) ? target.value : state.teams[0];
+        saveState();
+        renderTeamBoard();
+      }
+    }
+
+    function addPoints(periodId, studentId, amount) {
+      const period = state.periods.find((p) => p.id === periodId);
+      if (!period) return;
+      const student = period.students.find((s) => s.id === studentId);
+      if (!student) return;
+
+      const scope = state.activeTab;
+      const before = student.points[scope] || 0;
+      const multiplier = calcMultiplier(student, scope);
+      const gained = Math.round(amount * multiplier);
+      const after = before + gained;
+      student.points[scope] = after;
+
+      const oldLevel = Math.floor(before / 25) + 1;
+      const newLevel = Math.floor(after / 25) + 1;
+      student.level[scope] = newLevel;
+      if (newLevel > oldLevel) {
+        student.colors[scope] = LEVEL_COLORS[(newLevel - 1) % LEVEL_COLORS.length];
+        student.levelFlash = true;
+        playLevelUpSound(newLevel);
+        setTimeout(() => {
+          student.levelFlash = false;
+          saveState();
+          renderPeriods();
+        }, 420);
+      }
+      saveState();
+      renderAll();
+    }
+
+    function recordCheckIn(periodId, studentId) {
+      const period = state.periods.find((p) => p.id === periodId);
+      if (!period) return;
+      const student = period.students.find((s) => s.id === studentId);
+      if (!student) return;
+      const scope = state.activeTab;
+      if (student.multiplierOpen?.[scope] === false) return;
+      const today = dateKeyLocal();
+      if (student.lastCheckin[scope] === today) return;
+
+      if (scope === "daily") {
+        const yesterday = dateKeyOffset(-1);
+        student.streak[scope] = student.lastCheckin[scope] === yesterday ? (student.streak[scope] || 0) + 1 : 1;
+      } else {
+        student.streak[scope] = (student.streak[scope] || 0) + 1;
+      }
+      student.lastCheckin[scope] = today;
+      saveState();
+      renderAll();
+    }
+
+    function handleMultiplierButton(periodId, studentId) {
+      const period = state.periods.find((p) => p.id === periodId);
+      if (!period) return;
+      const student = period.students.find((s) => s.id === studentId);
+      if (!student) return;
+      const scope = state.activeTab;
+      student.multiplierOpen[scope] = !(student.multiplierOpen?.[scope] !== false);
+      saveState();
+      renderPeriods();
+    }
+
+    function addInfraction(periodId, studentId) {
+      const period = state.periods.find((p) => p.id === periodId);
+      if (!period) return;
+      const student = period.students.find((s) => s.id === studentId);
+      if (!student) return;
+      SCOPE_ORDER.forEach((scope) => {
+        student.infractions[scope].push({ id: uid(), stamp: nowISO() });
+      });
+      saveState();
+      renderAll();
+      if (currentInfraModal.studentId === studentId) renderInfractionModal();
+    }
+
+    function deleteInfraction(infractionId) {
+      const period = state.periods.find((p) => p.id === currentInfraModal.periodId);
+      if (!period) return;
+      const student = period.students.find((s) => s.id === currentInfraModal.studentId);
+      if (!student) return;
+      student.infractions[currentInfraModal.tab] = student.infractions[currentInfraModal.tab].filter((i) => i.id !== infractionId);
+      saveState();
+      renderAll();
+      renderInfractionModal();
+    }
+
+    function renderInfractionModal() {
+      const period = state.periods.find((p) => p.id === currentInfraModal.periodId);
+      if (!period) return;
+      const student = period.students.find((s) => s.id === currentInfraModal.studentId);
+      if (!student) return;
+
+      infraTitle.textContent = `${student.name} - Cell Phone Infractions`;
+      infractionModal.querySelectorAll("[data-infra-tab]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.infraTab === currentInfraModal.tab);
+      });
+
+      const list = student.infractions[currentInfraModal.tab] || [];
+      infraList.innerHTML = list.length ? list.map((item, idx) => `
+        <div class="infra-item">
+          <span>${idx + 1}. ${formatStamp(item.stamp)}</span>
+          <button class="btn-del" data-del-infraction-id="${item.id}" type="button">X</button>
+        </div>`).join("") : "<div class='infra-item'>No infractions logged.</div>";
+      drawInfractionGraph(student);
+    }
+
+    function drawInfractionGraph(student) {
+      const ctx = infraGraph.getContext("2d");
+      const w = infraGraph.width;
+      const h = infraGraph.height;
+      ctx.clearRect(0, 0, w, h);
+      const counts = SCOPE_ORDER.map((scope) => (student.infractions[scope] || []).length);
+      const max = Math.max(1, ...counts);
+      ctx.fillStyle = "#0a1130";
+      ctx.fillRect(0, 0, w, h);
+
+      const labels = ["Daily", "Weekly", "Monthly"];
+      const barW = 120;
+      const gap = 70;
+      const startX = 70;
+      counts.forEach((count, i) => {
+        const x = startX + i * (barW + gap);
+        const bh = (count / max) * 140;
+        const y = h - bh - 36;
+        ctx.fillStyle = ["#2ff3ff", "#ff2bbf", "#9bff2f"][i];
+        ctx.fillRect(x, y, barW, bh);
+        ctx.fillStyle = "#e9f8ff";
+        ctx.font = "14px sans-serif";
+        ctx.fillText(labels[i], x + 32, h - 14);
+        ctx.fillText(String(count), x + 52, y - 8);
+      });
+    }
+
+    function autoGrow(el) {
+      if (!el || !el.classList || !el.classList.contains("auto-grow")) return;
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+
+    function autoExpandAll() {
+      document.querySelectorAll("textarea.auto-grow").forEach(autoGrow);
+    }
+
+    function calcMultiplier(student, scope) {
+      return student.multiplierOpen?.[scope] !== false ? 1.5 : 1.0;
+    }
+
+    function getSuggestedTeam(period) {
+      const teams = state.teams.length ? state.teams : DEFAULT_TEAMS;
+      const counts = teams.map((team) => ({
+        team,
+        count: period.students.filter((s) => s.team === team).length
+      })).sort((a, b) => a.count - b.count);
+      return counts[0]?.team || teams[0];
+    }
+
+    function dateKeyLocal(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function dateKeyOffset(days) {
+      const dt = new Date();
+      dt.setDate(dt.getDate() + days);
+      return dateKeyLocal(dt);
+    }
+
+    function playLevelUpSound(level) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const base = 220 + level * 18;
+      [0, 4, 7].forEach((step, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = base * Math.pow(2, step / 12);
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const start = ctx.currentTime + idx * 0.08;
+        gain.gain.exponentialRampToValueAtTime(0.12, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+        osc.start(start);
+        osc.stop(start + 0.18);
+      });
+    }
+
+    function formatStamp(iso) {
+      return new Date(iso).toLocaleString();
+    }
+
+    function escapeHtml(value) {
+      return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    }
+
+    function capitalize(s) {
+      return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+    }
+
+    window.addEventListener("beforeunload", saveState);
+    window.addEventListener("input", (e) => {
+      if (e.target.matches("input, textarea")) saveState();
+    });
+  </script>
+</body>
+</html>
